@@ -246,7 +246,6 @@ export default function Index() {
                   <PanelRightOpen className="h-3.5 w-3.5"/> Show
                 </button>
               )}
-              <h1 className="text-2xl font-semibold tracking-tight">Hello{current?.memory?.name ? `, ${current.memory.name}` : ", human"}</h1>
             </div>
             <div className="flex items-center gap-2">
               {!dockBottom && (
