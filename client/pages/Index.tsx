@@ -84,6 +84,7 @@ export default function Index() {
 
   const easterEgg = (q: string): string | null => {
     const s = q.toLowerCase();
+    if (s.includes("shutdown")) return "Shutting down… 3… 2… 1… rebooted. Nice try, human.";
     if (s.includes("self-destruct")) return "Self-destruct sequence initiated. 5… 4… 3… kidding, human.";
     if (s.includes("up up down down left right left right b a")) return "Konami code detected. Extra snark unlocked.";
     return null;
@@ -225,6 +226,7 @@ export default function Index() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onInput={autoResize}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
                   placeholder={loading ? "Processing…" : "Ask anything, human"}
                   className="w-full min-h-[44px] max-h-[200px] resize-none rounded-md border bg-background/80 px-4 py-3 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/60"
                   aria-label="Your question"
