@@ -15,7 +15,7 @@ interface Props {
 export default function ChatMessage({ role, text, feedback = null, onCopy, onFeedback, onEdit }: Props) {
   const isHuman = role === "human";
   return (
-    <div className={cn("group relative flex gap-3", isHuman ? "justify-end" : "justify-start")}>
+    <div className={cn("group relative flex w-full items-start gap-3 py-0.5", isHuman ? "justify-end" : "justify-start")}>
       {!isHuman && (
         <div className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary/20 text-primary shadow-[0_0_16px_hsl(var(--primary)/0.35)]">
           <Cpu className="h-5 w-5" />
