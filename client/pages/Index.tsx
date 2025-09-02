@@ -242,6 +242,11 @@ export default function Index() {
           <div className="flex items-center justify-between gap-3 py-2">
             <h1 className="text-2xl font-semibold tracking-tight">Hello{current?.memory?.name ? `, ${current.memory.name}` : ", human"}</h1>
             <div className="flex items-center gap-2">
+              {!sidebarOpen && (
+                <button onClick={()=>setSidebarOpen(true)} className="px-2 py-1 rounded-full border border-border/60 inline-flex items-center gap-1 text-[11px]">
+                  <PanelRightOpen className="h-3.5 w-3.5"/> Show
+                </button>
+              )}
               {!dockBottom && (
                 <form onSubmit={onSubmit} className="rounded-full border border-border/60 bg-background/80 backdrop-blur px-4 py-2 flex items-center gap-3 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
                   <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 border border-border/60" aria-label="Microphone (decorative)">
