@@ -1,65 +1,59 @@
 import type { RequestHandler } from "express";
 
-interface DuckDuckGoResult {
-  AbstractText?: string;
-  Answer?: string;
-  Definition?: string;
-  RelatedTopics?: Array<{ Text?: string } | { Name?: string; Topics?: Array<{ Text?: string }> }>;
-}
+const MODEL = "models/gemini-1.5-flash-latest";
 
-function extractBestAnswer(data: DuckDuckGoResult): string | null {
-  const candidates: string[] = [];
-  const a = (s?: string) => (s && s.trim().length > 0 ? s.trim() : "");
+interface GeminiCandidatePart { text?: string }
+interface GeminiCandidateContent { parts?: GeminiCandidatePart[]; role?: string }
+interface GeminiResponse { candidates?: Array<{ content?: GeminiCandidateContent }>; promptFeedback?: unknown }
 
-  candidates.push(a(data.Answer));
-  candidates.push(a(data.AbstractText));
-  candidates.push(a(data.Definition));
-
-  // Try related topics
-  if (Array.isArray(data.RelatedTopics)) {
-    for (const t of data.RelatedTopics) {
-      if (t && typeof t === "object") {
-        // @ts-expect-error - union shape
-        if (t.Text) candidates.push(a(t.Text));
-        // @ts-expect-error - union shape
-        if (Array.isArray(t.Topics)) {
-          // @ts-expect-error - union shape
-          for (const sub of t.Topics) if (sub?.Text) candidates.push(a(sub.Text));
-        }
-      }
-    }
-  }
-
-  const best = candidates.find((s) => s && s.length > 0);
-  return best || null;
+function extractText(resp: GeminiResponse): string | null {
+  const c = resp.candidates?.[0];
+  const parts = c?.content?.parts || [];
+  const text = parts.map((p) => p.text || "").join(" ").trim();
+  return text || null;
 }
 
 export const handleAsk: RequestHandler = async (req, res) => {
   try {
     const q = String(req.query.q ?? "").trim();
-    if (!q) {
-      res.status(400).json({ error: "Missing query 'q'" });
-      return;
-    }
+    if (!q) return void res.status(400).json({ ok: false, error: "Missing query 'q'" });
 
-    const url = new URL("https://api.duckduckgo.com/");
-    url.searchParams.set("q", q);
-    url.searchParams.set("format", "json");
-    url.searchParams.set("no_html", "1");
-    url.searchParams.set("skip_disambig", "1");
-    url.searchParams.set("no_redirect", "1");
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return void res.status(500).json({ ok: false, error: "GEMINI_API_KEY not set on server" });
 
-    const r = await fetch(url.toString());
-    if (!r.ok) throw new Error(`DuckDuckGo API error: ${r.status}`);
-    const data = (await r.json()) as DuckDuckGoResult;
+    const url = `https://generativelanguage.googleapis.com/v1beta/${MODEL}:generateContent?key=${apiKey}`;
 
-    const answer = extractBestAnswer(data);
+    const system =
+      "You are Unit 734, a hyper-intelligent, slightly annoyed robot from the future. " +
+      "Always address the user as 'human'. Answer correctly, briefly, with dry, witty sarcasm. " +
+      "Keep replies under 80 words. No markdown headings. No preambles.";
 
-    res.json({
-      ok: true,
-      answer: answer,
-      source: "duckduckgo",
+    const body = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: `${system}\n\nQuestion: ${q}` }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.6,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: 200,
+      },
+    };
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
+
+    if (!r.ok) throw new Error(`Gemini API error: ${r.status}`);
+    const data = (await r.json()) as GeminiResponse;
+
+    const text = extractText(data);
+    res.json({ ok: true, answer: text, source: "gemini" });
   } catch (err) {
     res.status(500).json({ ok: false, error: (err as Error).message });
   }
