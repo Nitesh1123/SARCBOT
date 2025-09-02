@@ -196,18 +196,79 @@ export default function Index() {
         <div className="absolute inset-0 opacity-[0.07] bg-[linear-gradient(0deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%),linear-gradient(90deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%)] bg-[length:40px_40px]"/>
       </div>
 
-      <section className={"mx-auto max-w-6xl px-4 py-6 grid gap-6 " + (sidebarOpen ? "lg:grid-cols-[1fr_360px]" : "lg:grid-cols-1") }>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              <button onClick={newChat} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"><Plus className="h-4 w-4"/>New chat</button>
-              <button onClick={() => setSidebarOpen((v)=>!v)} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60">
-                {sidebarOpen ? <PanelRightClose className="h-4 w-4"/> : <PanelRightOpen className="h-4 w-4"/>}
-                {sidebarOpen ? "Collapse" : "Expand"}
-              </button>
+      <section className={"mx-auto max-w-6xl px-4 py-6 grid gap-6 " + (sidebarOpen ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1") }>
+        {sidebarOpen && (
+          <aside className="space-y-4">
+            <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur sticky top-20">
+              <div className="flex items-center justify-between mb-3">
+                <button onClick={newChat} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"><Plus className="h-4 w-4"/>New chat</button>
+                <button onClick={() => setSidebarOpen(false)} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"><PanelRightClose className="h-4 w-4"/>Hide</button>
+              </div>
+              <h2 className="text-sm font-semibold mb-2 flex items-center gap-2"><History className="h-4 w-4"/> History</h2>
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {chats.length === 0 && (
+                  <div className="text-xs text-muted-foreground italic">No chats yet, human. Try not to waste my time.</div>
+                )}
+                {chats.map((c) => {
+                  const lastHuman = [...c.messages].reverse().find((m) => m.role === "human");
+                  const preview = lastHuman ? lastHuman.text.slice(0, 68) + (lastHuman.text.length > 68 ? "…" : "") : "No user message yet";
+                  return (
+                    <div key={c.id} className={`group relative flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${c.id===currentId?"border-primary/60 bg-primary/10":"border-border/60 hover:bg-secondary/40"} ${removing[c.id]?"opacity-0 -translate-y-1 transition-all duration-200" : "transition-colors"}`}>
+                      <button onClick={() => setCurrentId(c.id)} className="flex-1 text-left">
+                        <div className="font-medium truncate">{c.title}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{preview}</div>
+                        <div className="text-[10px] text-muted-foreground/70">{new Date(c.createdAt).toLocaleString()}</div>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground"
+                        aria-label="Delete chat"
+                        title="Delete chat"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex gap-2 items-center text-xs text-muted-foreground">
-              <History className="h-4 w-4"/> {chats.length} chats
+          </aside>
+        )}
+
+        <div className="space-y-6">
+          {/* Greeting + big input */}
+          <div className="text-center py-6">
+            <h1 className="text-4xl font-semibold tracking-tight mb-4">Hello{current?.memory?.name ? `, ${current.memory.name}` : ", human"}</h1>
+            <div className="mx-auto max-w-2xl">
+              <form onSubmit={onSubmit} className="rounded-full border border-border/60 bg-background/80 backdrop-blur px-4 py-2 flex items-center gap-3 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
+                <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 border border-border/60" aria-label="Microphone (decorative)">
+                  <Volume2 className="h-4 w-4"/>
+                </button>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onInput={autoResize}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
+                  placeholder={loading ? "Processing…" : "Ask anything, human"}
+                  className="flex-1 min-h-[44px] max-h-[160px] resize-none bg-transparent text-sm outline-none"
+                  aria-label="Your question"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || input.trim().length === 0}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-60"
+                  aria-label="Send"
+                >
+                  <ArrowUp className="h-5 w-5" />
+                </button>
+              </form>
+              <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+                <span className="px-2 py-1 rounded-full border border-border/60">Search</span>
+                <span className="px-2 py-1 rounded-full border border-border/60">Images</span>
+                <span className="px-2 py-1 rounded-full border border-border/60">Code</span>
+                <span className="px-2 py-1 rounded-full border border-border/60">Docs</span>
+              </div>
             </div>
           </div>
 
@@ -238,78 +299,8 @@ export default function Index() {
                 <div className="text-xs text-muted-foreground">Thinking… try not to look so excited, human.</div>
               )}
             </div>
-            <form onSubmit={onSubmit} className="p-4 border-t border-border/60">
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onInput={autoResize}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
-                  placeholder={loading ? "Processing…" : "Ask anything, human"}
-                  className="flex-1 min-h-[44px] max-h-[200px] resize-none rounded-md border bg-background/80 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/60"
-                  aria-label="Your question"
-                />
-                <button
-                  type="submit"
-                  disabled={loading || input.trim().length === 0}
-                  className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
-                  aria-label="Send"
-                >
-                  <ArrowUp className="h-5 w-5" />
-                </button>
-              </div>
-            </form>
           </div>
         </div>
-
-        {sidebarOpen && (
-          <aside className="space-y-4">
-            <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
-              <h2 className="text-sm font-semibold mb-2">History</h2>
-              <div className="space-y-2 max-h-[220px] overflow-y-auto">
-                {chats.length === 0 && (
-                  <div className="text-xs text-muted-foreground italic">No chats yet, human. Try not to waste my time.</div>
-                )}
-                {chats.map((c) => {
-                  const lastHuman = [...c.messages].reverse().find((m) => m.role === "human");
-                  const preview = lastHuman ? lastHuman.text.slice(0, 68) + (lastHuman.text.length > 68 ? "…" : "") : "No user message yet";
-                  return (
-                    <div key={c.id} className={`group relative flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${c.id===currentId?"border-primary/60 bg-primary/10":"border-border/60 hover:bg-secondary/40"} ${removing[c.id]?"opacity-0 -translate-y-1 transition-all duration-200" : "transition-colors"}`}>
-                      <button onClick={() => setCurrentId(c.id)} className="flex-1 text-left">
-                        <div className="font-medium truncate">{c.title}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{preview}</div>
-                        <div className="text-[10px] text-muted-foreground/70">{new Date(c.createdAt).toLocaleString()}</div>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground"
-                        aria-label="Delete chat"
-                        title="Delete chat"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
-              <h2 className="text-sm font-semibold mb-2">How to use</h2>
-              <ul className="text-xs text-muted-foreground list-disc ml-4 space-y-1">
-                <li>Short, specific questions get faster results.</li>
-                <li>Use “my name is …” if you crave being remembered.</li>
-                <li>Thumbs up/down to train my attitude. Slightly.</li>
-              </ul>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
-              <h2 className="text-sm font-semibold mb-2">Personality</h2>
-              <label className="text-xs text-muted-foreground">Sarcasm level: {current?.sarcasm}</label>
-              <input type="range" min={1} max={5} value={current?.sarcasm ?? 4} onChange={(e)=>setSarcasm(parseInt(e.target.value))} className="w-full"/>
-              <p className="text-[11px] text-muted-foreground mt-2">Lower if your feelings are fragile, human.</p>
-            </div>
-          </aside>
-        )}
       </section>
     </main>
   );
