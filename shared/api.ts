@@ -10,3 +10,10 @@
 export interface DemoResponse {
   message: string;
 }
+
+export interface AskResponse {
+  ok: boolean;
+  answer: string | null;
+  source?: string;
+  error?: string;
+}
