@@ -59,6 +59,11 @@ export default function Index() {
   const updateCurrent = (patch: Partial<Chat>) => {
     setChats((all) => all.map((c) => (c.id === currentId ? { ...c, ...patch } : c)));
   };
+  const appendToCurrent = (msg: Msg, title?: string) => {
+    setChats((all) => all.map((c) => (
+      c.id === currentId ? { ...c, title: title ?? c.title, messages: [...c.messages, msg] } : c
+    )));
+  };
 
   const newChat = () => {
     const c: Chat = {
@@ -123,7 +128,7 @@ export default function Index() {
     const egg = easterEgg(q);
     if (egg) {
       const id = crypto.randomUUID();
-      updateCurrent({ messages: [ ...(current.messages || []), { id, role: "unit", text: "" } ] });
+      appendToCurrent({ id, role: "unit", text: "" });
       streamAppend(id, egg);
       return;
     }
@@ -140,10 +145,10 @@ export default function Index() {
       const data = (await r.json()) as AskResponse;
       const answer = (data.answer ?? "").trim() || "No useful output, human. Try being clearer.";
       const id = crypto.randomUUID();
-      updateCurrent({ messages: [ ...(current.messages || []), { id, role: "unit", text: "" } ] });
+      appendToCurrent({ id, role: "unit", text: "" });
       streamAppend(id, answer);
     } catch {
-      updateCurrent({ messages: [ ...(current.messages || []), { id: crypto.randomUUID(), role: "unit", text: "Your request crashed something. Not me, obviously." } ] });
+      appendToCurrent({ id: crypto.randomUUID(), role: "unit", text: "Your request crashed something. Not me, obviously." });
     } finally {
       setLoading(false);
     }
@@ -153,9 +158,9 @@ export default function Index() {
     e.preventDefault();
     const q = input.trim();
     if (!q || !current || loading) return;
-    const nextMsgs = [...current.messages, { id: crypto.randomUUID(), role: "human", text: q }];
+    const humanMsg: Msg = { id: crypto.randomUUID(), role: "human", text: q };
     const title = current.title === "New chat" ? q.slice(0, 42) : current.title;
-    updateCurrent({ messages: nextMsgs, title });
+    appendToCurrent(humanMsg, title);
     setInput("");
     await ask(q);
   };
