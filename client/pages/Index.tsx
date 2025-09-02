@@ -293,7 +293,7 @@ export default function Index() {
                 {current?.voice ? "Voice on" : "Voice off"}
               </button>
             </div>
-            <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+            <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 scroll-smooth overscroll-contain">
               {current?.messages.map((m, i) => (
                 <ChatMessage
                   key={m.id}
