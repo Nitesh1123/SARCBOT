@@ -30,44 +30,38 @@ export default function ChatMessage({ role, text, feedback = null, onCopy, onFee
         )}
       >
         {text}
-        <div className={cn("absolute -top-3", isHuman ? "left-2" : "right-2")}></div>
-        <div className={cn("absolute -top-8 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100", isHuman ? "right-0" : "left-0")}>
-          {!isHuman && (
-            <>
-              <button
-                className="inline-flex h-7 items-center rounded-md bg-background/70 px-2 text-xs border border-border/60"
-                onClick={() => onFeedback?.("up")}
-                aria-label="Thumbs up"
-              >
-                👍{feedback === "up" ? "" : ""}
-              </button>
-              <button
-                className="inline-flex h-7 items-center rounded-md bg-background/70 px-2 text-xs border border-border/60"
-                onClick={() => onFeedback?.("down")}
-                aria-label="Thumbs down"
-              >
-                👎
-              </button>
-            </>
-          )}
+      </div>
+      {!isHuman ? (
+        <div className="text-[11px] mt-1 flex items-center gap-2 text-muted-foreground">
           <button
-            className="inline-flex h-7 items-center rounded-md bg-background/70 px-2 text-xs border border-border/60"
+            className="inline-flex h-6 items-center rounded-md bg-background/70 px-2 border border-border/60"
+            onClick={() => onFeedback?.("up")}
+            aria-label="Thumbs up"
+          >
+            👍
+          </button>
+          <button
+            className="inline-flex h-6 items-center rounded-md bg-background/70 px-2 border border-border/60"
+            onClick={() => onFeedback?.("down")}
+            aria-label="Thumbs down"
+          >
+            👎
+          </button>
+          <button
+            className="ml-2 underline-offset-4 hover:underline"
             onClick={() => onCopy?.(text)}
             aria-label="Copy message"
           >
             Copy
           </button>
-          {isHuman && (
-            <button
-              className="inline-flex h-7 items-center rounded-md bg-background/70 px-2 text-xs border border-border/60"
-              onClick={onEdit}
-              aria-label="Edit message"
-            >
-              Edit
-            </button>
-          )}
+          {feedback && <span className="ml-1">({feedback})</span>}
         </div>
-      </div>
+      ) : (
+        <div className="text-[11px] mt-1 flex items-center gap-2 text-muted-foreground">
+          <button className="underline-offset-4 hover:underline" onClick={() => onCopy?.(text)} aria-label="Copy message">Copy</button>
+          <button className="underline-offset-4 hover:underline" onClick={onEdit} aria-label="Edit message">Edit</button>
+        </div>
+      )}
       {isHuman && (
         <div className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md bg-accent/30 text-accent-foreground border border-border/60">
           <User className="h-5 w-5" />
