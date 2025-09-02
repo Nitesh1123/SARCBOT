@@ -33,6 +33,7 @@ export default function Index() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [removing, setRemoving] = useState<Record<string, boolean>>({});
 
   // Ensure at least one chat exists
   useEffect(() => {
@@ -169,6 +170,19 @@ export default function Index() {
 
   const setSarcasm = (v: number) => updateCurrent({ sarcasm: v });
   const toggleVoice = () => updateCurrent({ voice: !(current?.voice ?? false) });
+
+  const deleteChat = (id: string) => {
+    const ok = window.confirm("Delete this chat, human? It won’t be missed.");
+    if (!ok) return;
+    setRemoving((r) => ({ ...r, [id]: true }));
+    setTimeout(() => {
+      setChats((all) => {
+        const filtered = all.filter((c) => c.id !== id);
+        if (currentId === id) setCurrentId(filtered[0]?.id || "");
+        return filtered;
+      });
+    }, 180);
+  };
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem-3.5rem)]">
