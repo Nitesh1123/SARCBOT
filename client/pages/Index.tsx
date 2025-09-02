@@ -5,30 +5,6 @@ import { ArrowUp, Sparkles } from "lucide-react";
 
 interface Msg { role: ChatRole; text: string }
 
-function sarcasticWrap(answer: string | null, question: string): string {
-  const openers = [
-    "Here you go, human:",
-    "As you insist:",
-    "Predictably curious, aren't you?",
-    "Fine. Data:",
-    "Minimal effort, maximum clarity:",
-  ];
-
-  const fallbacks = [
-    "No decisive answer. Try being specific, human.",
-    "Not enough signal. Refine the question.",
-    "Vague input detected. Clarify, please.",
-    "Unknown in this timeline. Rephrase.",
-  ];
-
-  if (!answer) {
-    return `${fallbacks[Math.floor(Math.random()*fallbacks.length)]}`;
-  }
-
-  // Keep it short. If too long, trim gracefully.
-  const trimmed = answer.length > 320 ? answer.slice(0, 317).trimEnd() + "…" : answer;
-  return `${openers[Math.floor(Math.random()*openers.length)]} ${trimmed}`;
-}
 
 export default function Index() {
   const [messages, setMessages] = useState<Msg[]>([
@@ -48,7 +24,8 @@ export default function Index() {
       const url = `/api/ask?q=${encodeURIComponent(q)}`;
       const r = await fetch(url);
       const data = (await r.json()) as AskResponse;
-      const reply = sarcasticWrap(data.answer ?? null, q);
+      const answer = (data.answer ?? "").trim();
+      const reply = answer || "No useful output, human. Try being clearer.";
       setMessages((m) => [...m, { role: "unit", text: reply }]);
     } catch (e) {
       setMessages((m) => [
