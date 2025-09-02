@@ -23,3 +23,10 @@ export function createServer() {
 
   return app;
 }
+
+// 🚀 Start server directly if this file is run with `pnpm tsx server/index.ts`
+const app = createServer();
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
