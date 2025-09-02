@@ -266,22 +266,27 @@ export default function Index() {
                 {chats.length === 0 && (
                   <div className="text-xs text-muted-foreground italic">No chats yet, human. Try not to waste my time.</div>
                 )}
-                {chats.map((c) => (
-                  <div key={c.id} className={`group relative flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${c.id===currentId?"border-primary/60 bg-primary/10":"border-border/60 hover:bg-secondary/40"} ${removing[c.id]?"opacity-0 -translate-y-1 transition-all duration-200" : "transition-colors"}`}>
-                    <button onClick={() => setCurrentId(c.id)} className="flex-1 text-left">
-                      <div className="font-medium truncate">{c.title}</div>
-                      <div className="text-[10px] text-muted-foreground">{new Date(c.createdAt).toLocaleString()}</div>
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground"
-                      aria-label="Delete chat"
-                      title="Delete chat"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+                {chats.map((c) => {
+                  const lastHuman = [...c.messages].reverse().find((m) => m.role === "human");
+                  const preview = lastHuman ? lastHuman.text.slice(0, 68) + (lastHuman.text.length > 68 ? "…" : "") : "No user message yet";
+                  return (
+                    <div key={c.id} className={`group relative flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${c.id===currentId?"border-primary/60 bg-primary/10":"border-border/60 hover:bg-secondary/40"} ${removing[c.id]?"opacity-0 -translate-y-1 transition-all duration-200" : "transition-colors"}`}>
+                      <button onClick={() => setCurrentId(c.id)} className="flex-1 text-left">
+                        <div className="font-medium truncate">{c.title}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{preview}</div>
+                        <div className="text-[10px] text-muted-foreground/70">{new Date(c.createdAt).toLocaleString()}</div>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteChat(c.id); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground"
+                        aria-label="Delete chat"
+                        title="Delete chat"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
