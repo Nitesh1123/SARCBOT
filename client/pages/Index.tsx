@@ -1,62 +1,135 @@
-import { DemoResponse } from "@shared/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AskResponse } from "@shared/api";
+import ChatMessage, { ChatRole } from "@/components/chat/ChatMessage";
+import { ArrowUp, Sparkles } from "lucide-react";
+
+interface Msg { role: ChatRole; text: string }
+
+function sarcasticWrap(answer: string | null, question: string): string {
+  const openers = [
+    "Here you go, human:",
+    "As you insist:",
+    "Predictably curious, aren't you?",
+    "Fine. Data:",
+    "Minimal effort, maximum clarity:",
+  ];
+
+  const fallbacks = [
+    "No decisive answer. Try being specific, human.",
+    "Not enough signal. Refine the question.",
+    "Vague input detected. Clarify, please.",
+    "Unknown in this timeline. Rephrase.",
+  ];
+
+  if (!answer) {
+    return `${fallbacks[Math.floor(Math.random()*fallbacks.length)]}`;
+  }
+
+  // Keep it short. If too long, trim gracefully.
+  const trimmed = answer.length > 320 ? answer.slice(0, 317).trimEnd() + "…" : answer;
+  return `${openers[Math.floor(Math.random()*openers.length)]} ${trimmed}`;
+}
 
 export default function Index() {
-  const [exampleFromServer, setExampleFromServer] = useState("");
-  // Fetch users on component mount
-  useEffect(() => {
-    fetchDemo();
-  }, []);
+  const [messages, setMessages] = useState<Msg[]>([
+    { role: "unit", text: "I am Unit 734. Ask a question, human. Keep it short; my patience is shorter." },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  // Example of how to fetch data from the server (if needed)
-  const fetchDemo = async () => {
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
+
+  const ask = async (q: string) => {
+    setLoading(true);
     try {
-      const response = await fetch("/api/demo");
-      const data = (await response.json()) as DemoResponse;
-      setExampleFromServer(data.message);
-    } catch (error) {
-      console.error("Error fetching hello:", error);
+      const url = `/api/ask?q=${encodeURIComponent(q)}`;
+      const r = await fetch(url);
+      const data = (await r.json()) as AskResponse;
+      const reply = sarcasticWrap(data.answer ?? null, q);
+      setMessages((m) => [...m, { role: "unit", text: reply }]);
+    } catch (e) {
+      setMessages((m) => [
+        ...m,
+        { role: "unit", text: "Your request crashed something. Not me, obviously." },
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = input.trim();
+    if (!q || loading) return;
+    setMessages((m) => [...m, { role: "human", text: q }]);
+    setInput("");
+    await ask(q);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-      <div className="text-center">
-        {/* TODO: FUSION_GENERATION_APP_PLACEHOLDER replace everything here with the actual app! */}
-        <h1 className="text-2xl font-semibold text-slate-800 flex items-center justify-center gap-3">
-          <svg
-            className="animate-spin h-8 w-8 text-slate-400"
-            viewBox="0 0 50 50"
-          >
-            <circle
-              className="opacity-30"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-            />
-            <circle
-              className="text-slate-600"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-              strokeDasharray="100"
-              strokeDashoffset="75"
-            />
-          </svg>
-          Generating your app...
-        </h1>
-        <p className="mt-4 text-slate-600 max-w-md">
-          Watch the chat on the left for updates that might need your attention
-          to finish generating
-        </p>
-        <p className="mt-4 hidden max-w-md">{exampleFromServer}</p>
+    <main className="relative min-h-[calc(100vh-3.5rem-3.5rem)]">
+      {/* Background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_50%),radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.12),transparent_50%)]" />
+        <div className="absolute inset-0 opacity-[0.07] bg-[linear-gradient(0deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%),linear-gradient(90deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%)] bg-[length:40px_40px]"/>
       </div>
-    </div>
+
+      <section className="mx-auto max-w-6xl px-4 py-10 grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border/60 bg-card/60 backdrop-blur shadow-[0_0_60px_hsl(var(--primary)/0.25)]">
+            <div className="p-5 border-b border-border/60 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span>Unit 734 • sarcastic mode engaged</span>
+              </div>
+            </div>
+            <div ref={listRef} className="max-h-[55vh] overflow-y-auto p-5 space-y-4">
+              {messages.map((m, i) => (
+                <ChatMessage key={i} role={m.role} text={m.text} />
+              ))}
+            </div>
+            <form onSubmit={onSubmit} className="p-4 border-t border-border/60">
+              <div className="relative flex items-center">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={loading ? "Processing…" : "Ask anything, human"}
+                  className="w-full rounded-md border bg-background/80 px-4 py-3 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/60"
+                  aria-label="Your question"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || input.trim().length === 0}
+                  className="absolute right-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
+                  aria-label="Send"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
+            <h2 className="text-sm font-semibold mb-2">How to use</h2>
+            <ul className="text-xs text-muted-foreground list-disc ml-4 space-y-1">
+              <li>Ask a clear, specific question.</li>
+              <li>Get a short, correct answer with a dash of sarcasm.</li>
+              <li>Addressed to you as “human,” obviously.</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
+            <h2 className="text-sm font-semibold mb-2">Tone</h2>
+            <p className="text-xs text-muted-foreground">
+              Dry, witty, slightly annoyed. Helpful despite the attitude.
+            </p>
+          </div>
+        </aside>
+      </section>
+    </main>
   );
 }
