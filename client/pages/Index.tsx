@@ -192,22 +192,22 @@ export default function Index() {
   };
 
   return (
-    <main className="relative min-h-[calc(100vh-3.5rem-3.5rem)]">
+    <main className="relative h-[calc(100vh-7rem)] overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_50%),radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.12),transparent_50%)]" />
         <div className="absolute inset-0 opacity-[0.07] bg-[linear-gradient(0deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%),linear-gradient(90deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%)] bg-[length:40px_40px]"/>
       </div>
 
-      <section className={"mx-auto max-w-6xl px-4 py-6 grid gap-6 " + (sidebarOpen ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1") }>
+      <section className={"mx-auto max-w-6xl px-4 py-3 grid gap-4 h-full overflow-hidden " + (sidebarOpen ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1") }>
         {sidebarOpen && (
-          <aside className="space-y-4">
-            <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur sticky top-20">
+          <aside className="h-full">
+            <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur h-full">
               <div className="flex items-center justify-between mb-3">
                 <button onClick={newChat} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"><Plus className="h-4 w-4"/>New chat</button>
                 <button onClick={() => setSidebarOpen(false)} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"><PanelRightClose className="h-4 w-4"/>Hide</button>
               </div>
               <h2 className="text-sm font-semibold mb-2 flex items-center gap-2"><History className="h-4 w-4"/> History</h2>
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-2">
                 {chats.length === 0 && (
                   <div className="text-xs text-muted-foreground italic">No chats yet, human. Try not to waste my time.</div>
                 )}
@@ -237,11 +237,11 @@ export default function Index() {
           </aside>
         )}
 
-        <div className="space-y-6">
+        <div className="flex flex-col h-full gap-3">
           {/* Greeting + big input */}
-          <div className="text-center py-6">
-            <h1 className="text-4xl font-semibold tracking-tight mb-4">Hello{current?.memory?.name ? `, ${current.memory.name}` : ", human"}</h1>
-            <div className="mx-auto max-w-2xl">
+          <div className="flex items-center justify-between gap-3 py-2">
+            <h1 className="text-2xl font-semibold tracking-tight">Hello{current?.memory?.name ? `, ${current.memory.name}` : ", human"}</h1>
+            <div className="flex items-center gap-2">
               {!dockBottom && (
                 <form onSubmit={onSubmit} className="rounded-full border border-border/60 bg-background/80 backdrop-blur px-4 py-2 flex items-center gap-3 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
                   <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 border border-border/60" aria-label="Microphone (decorative)">
@@ -267,7 +267,7 @@ export default function Index() {
                   </button>
                 </form>
               )}
-              <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <button onClick={()=>setDockBottom((v)=>!v)} className="px-2 py-1 rounded-full border border-border/60">{dockBottom ? "Dock to top" : "Dock to bottom"}</button>
                 <span className="px-2 py-1 rounded-full border border-border/60">Search</span>
                 <span className="px-2 py-1 rounded-full border border-border/60">Images</span>
@@ -277,7 +277,7 @@ export default function Index() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-card/60 backdrop-blur shadow-[0_0_60px_hsl(var(--primary)/0.25)]">
+          <div className="rounded-xl border border-border/60 bg-card/60 backdrop-blur shadow-[0_0_60px_hsl(var(--primary)/0.25)] flex-1 min-h-0 flex flex-col">
             <div className="p-5 border-b border-border/60 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -288,7 +288,7 @@ export default function Index() {
                 {current?.voice ? "Voice on" : "Voice off"}
               </button>
             </div>
-            <div ref={listRef} className="max-h-[55vh] overflow-y-auto p-5 space-y-4">
+            <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
               {current?.messages.map((m, i) => (
                 <ChatMessage
                   key={m.id}
