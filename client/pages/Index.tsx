@@ -34,6 +34,7 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
+  const [dockBottom, setDockBottom] = useState(true);
 
   // Ensure at least one chat exists
   useEffect(() => {
