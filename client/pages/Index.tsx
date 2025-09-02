@@ -92,7 +92,7 @@ export default function Index() {
   const easterEgg = (q: string): string | null => {
     const s = q.toLowerCase();
     if (s.includes("shutdown")) return "Shutting down… 3… 2… 1… rebooted. Nice try, human.";
-    if (s.includes("self-destruct")) return "Self-destruct sequence initiated. 5… 4… 3… kidding, human.";
+    if (s.includes("self-destruct")) return "Self-destruct sequence initiated. 5… 4��� 3… kidding, human.";
     if (s.includes("up up down down left right left right b a")) return "Konami code detected. Extra snark unlocked.";
     return null;
   };
@@ -241,30 +241,33 @@ export default function Index() {
           <div className="text-center py-6">
             <h1 className="text-4xl font-semibold tracking-tight mb-4">Hello{current?.memory?.name ? `, ${current.memory.name}` : ", human"}</h1>
             <div className="mx-auto max-w-2xl">
-              <form onSubmit={onSubmit} className="rounded-full border border-border/60 bg-background/80 backdrop-blur px-4 py-2 flex items-center gap-3 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
-                <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 border border-border/60" aria-label="Microphone (decorative)">
-                  <Volume2 className="h-4 w-4"/>
-                </button>
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onInput={autoResize}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
-                  placeholder={loading ? "Processing…" : "Ask anything, human"}
-                  className="flex-1 min-h-[44px] max-h-[160px] resize-none bg-transparent text-sm outline-none"
-                  aria-label="Your question"
-                />
-                <button
-                  type="submit"
-                  disabled={loading || input.trim().length === 0}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-60"
-                  aria-label="Send"
-                >
-                  <ArrowUp className="h-5 w-5" />
-                </button>
-              </form>
+              {!dockBottom && (
+                <form onSubmit={onSubmit} className="rounded-full border border-border/60 bg-background/80 backdrop-blur px-4 py-2 flex items-center gap-3 shadow-[0_0_40px_hsl(var(--primary)/0.15)]">
+                  <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary/50 border border-border/60" aria-label="Microphone (decorative)">
+                    <Volume2 className="h-4 w-4"/>
+                  </button>
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onInput={autoResize}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
+                    placeholder={loading ? "Processing…" : "Ask anything, human"}
+                    className="flex-1 min-h-[44px] max-h-[160px] resize-none bg-transparent text-sm outline-none"
+                    aria-label="Your question"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || input.trim().length === 0}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-60"
+                    aria-label="Send"
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                  </button>
+                </form>
+              )}
               <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+                <button onClick={()=>setDockBottom((v)=>!v)} className="px-2 py-1 rounded-full border border-border/60">{dockBottom ? "Dock to top" : "Dock to bottom"}</button>
                 <span className="px-2 py-1 rounded-full border border-border/60">Search</span>
                 <span className="px-2 py-1 rounded-full border border-border/60">Images</span>
                 <span className="px-2 py-1 rounded-full border border-border/60">Code</span>
@@ -277,7 +280,7 @@ export default function Index() {
             <div className="p-5 border-b border-border/60 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span>Unit 734 • sarcastic mode engaged</span>
+                <span>Unit 734 ��� sarcastic mode engaged</span>
               </div>
               <button onClick={toggleVoice} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs bg-secondary/40 border-border/60">
                 {current?.voice ? <Volume2 className="h-4 w-4"/> : <VolumeX className="h-4 w-4"/>}
@@ -300,6 +303,30 @@ export default function Index() {
                 <div className="text-xs text-muted-foreground">Thinking… try not to look so excited, human.</div>
               )}
             </div>
+            {dockBottom && (
+              <form onSubmit={onSubmit} className="p-4 border-t border-border/60">
+                <div className="flex items-end gap-2">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onInput={autoResize}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
+                    placeholder={loading ? "Processing…" : "Ask anything, human"}
+                    className="flex-1 min-h-[44px] max-h-[200px] resize-none rounded-md border bg-background/80 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/60"
+                    aria-label="Your question"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || input.trim().length === 0}
+                    className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
+                    aria-label="Send"
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </section>
