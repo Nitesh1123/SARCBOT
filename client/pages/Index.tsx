@@ -220,7 +220,7 @@ export default function Index() {
               )}
             </div>
             <form onSubmit={onSubmit} className="p-4 border-t border-border/60">
-              <div className="relative flex items-end">
+              <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -228,16 +228,16 @@ export default function Index() {
                   onInput={autoResize}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit(e); } }}
                   placeholder={loading ? "Processing…" : "Ask anything, human"}
-                  className="w-full min-h-[44px] max-h-[200px] resize-none rounded-md border bg-background/80 px-4 py-3 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/60"
+                  className="flex-1 min-h-[44px] max-h-[200px] resize-none rounded-md border bg-background/80 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/60"
                   aria-label="Your question"
                 />
                 <button
                   type="submit"
                   disabled={loading || input.trim().length === 0}
-                  className="absolute right-1 mb-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
+                  className="shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
                   aria-label="Send"
                 >
-                  <ArrowUp className="h-4 w-4" />
+                  <ArrowUp className="h-5 w-5" />
                 </button>
               </div>
             </form>
