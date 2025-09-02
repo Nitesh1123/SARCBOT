@@ -1,37 +1,147 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AskResponse } from "@shared/api";
 import ChatMessage, { ChatRole } from "@/components/chat/ChatMessage";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp, History, Plus, Sparkles, Volume2, VolumeX, PanelRightClose, PanelRightOpen } from "lucide-react";
 
-interface Msg { role: ChatRole; text: string }
+type Feedback = "up" | "down" | null;
 
+interface Msg { id: string; role: ChatRole; text: string; feedback?: Feedback }
+interface Chat { id: string; title: string; createdAt: number; messages: Msg[]; memory?: { name?: string }; sarcasm: number; voice: boolean }
+
+const LS_KEY = "unit734.chats";
+const CUR_KEY = "unit734.current";
+
+const seedMessage: Msg = { id: crypto.randomUUID(), role: "unit", text: "I am Unit 734. Ask a question, human. Keep it short; my patience is shorter." };
+
+function loadChats(): Chat[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as Chat[];
+  } catch {
+    return [];
+  }
+}
+function saveChats(chats: Chat[]) { localStorage.setItem(LS_KEY, JSON.stringify(chats)); }
 
 export default function Index() {
-  const [messages, setMessages] = useState<Msg[]>([
-    { role: "unit", text: "I am Unit 734. Ask a question, human. Keep it short; my patience is shorter." },
-  ]);
+  const [chats, setChats] = useState<Chat[]>(() => loadChats());
+  const [currentId, setCurrentId] = useState<string>(() => localStorage.getItem(CUR_KEY) || "");
+  const current = useMemo(() => chats.find((c) => c.id === currentId) || null, [chats, currentId]);
+  const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Ensure at least one chat exists
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (!current) {
+      const c: Chat = {
+        id: crypto.randomUUID(),
+        title: "New chat",
+        createdAt: Date.now(),
+        messages: [seedMessage],
+        sarcasm: 4,
+        voice: false,
+      };
+      const next = [c, ...chats];
+      setChats(next); localStorage.setItem(CUR_KEY, c.id); setCurrentId(c.id); saveChats(next);
+    }
+  }, []);
+
+  useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" }); }, [current?.messages]);
+
+  useEffect(() => { saveChats(chats); }, [chats]);
+  useEffect(() => { localStorage.setItem(CUR_KEY, currentId); }, [currentId]);
+
+  const updateCurrent = (patch: Partial<Chat>) => {
+    setChats((all) => all.map((c) => (c.id === currentId ? { ...c, ...patch } : c)));
+  };
+
+  const newChat = () => {
+    const c: Chat = {
+      id: crypto.randomUUID(),
+      title: "New chat",
+      createdAt: Date.now(),
+      messages: [seedMessage],
+      sarcasm: current?.sarcasm ?? 4,
+      voice: current?.voice ?? false,
+    };
+    setChats((all) => [c, ...all]);
+    setCurrentId(c.id);
+  };
+
+  const speak = (text: string) => {
+    if (!current?.voice) return;
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.0; u.pitch = 0.7; u.volume = 1;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    } catch {}
+  };
+
+  const easterEgg = (q: string): string | null => {
+    const s = q.toLowerCase();
+    if (s.includes("self-destruct")) return "Self-destruct sequence initiated. 5… 4… 3… kidding, human.";
+    if (s.includes("up up down down left right left right b a")) return "Konami code detected. Extra snark unlocked.";
+    return null;
+  };
+
+  // Auto-resize
+  const autoResize = () => {
+    const ta = inputRef.current; if (!ta) return; ta.style.height = "0px"; ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
+  };
+
+  useEffect(autoResize, [input]);
+
+  const streamAppend = (id: string, full: string) => {
+    const words = full.split(/(\s+)/); // keep spaces
+    let i = 0;
+    const tick = () => {
+      setChats((all) => all.map((c) => c.id !== currentId ? c : ({
+        ...c,
+        messages: c.messages.map((m) => m.id === id ? { ...m, text: words.slice(0, i).join("") } : m),
+      })));
+      i += 2; // word + space
+      if (i <= words.length) setTimeout(tick, 22 + Math.random() * 38);
+      else speak(full);
+    };
+    setTimeout(tick, 60);
+  };
+
+  const remember = (q: string) => {
+    const m = q.match(/my name is\s+([a-zA-Z]+)\b/i) || q.match(/i am\s+([a-zA-Z]+)\b/i);
+    if (m?.[1]) updateCurrent({ memory: { ...(current?.memory || {}), name: m[1] } });
+  };
 
   const ask = async (q: string) => {
+    if (!current) return;
+    const egg = easterEgg(q);
+    if (egg) {
+      const id = crypto.randomUUID();
+      updateCurrent({ messages: [ ...(current.messages || []), { id, role: "unit", text: "" } ] });
+      streamAppend(id, egg);
+      return;
+    }
+
     setLoading(true);
+    remember(q);
     try {
-      const url = `/api/ask?q=${encodeURIComponent(q)}`;
+      const name = current.memory?.name ? ` The human says their name is ${current.memory.name}.` : "";
+      const level = current.sarcasm ?? 4;
+      const meta = ` Sarcasm level: ${level}/5. Vary style to avoid repetition.`;
+      const composed = `${q}.${name}${meta}`;
+      const url = `/api/ask?q=${encodeURIComponent(composed)}`;
       const r = await fetch(url);
       const data = (await r.json()) as AskResponse;
-      const answer = (data.answer ?? "").trim();
-      const reply = answer || "No useful output, human. Try being clearer.";
-      setMessages((m) => [...m, { role: "unit", text: reply }]);
-    } catch (e) {
-      setMessages((m) => [
-        ...m,
-        { role: "unit", text: "Your request crashed something. Not me, obviously." },
-      ]);
+      const answer = (data.answer ?? "").trim() || "No useful output, human. Try being clearer.";
+      const id = crypto.randomUUID();
+      updateCurrent({ messages: [ ...(current.messages || []), { id, role: "unit", text: "" } ] });
+      streamAppend(id, answer);
+    } catch {
+      updateCurrent({ messages: [ ...(current.messages || []), { id: crypto.randomUUID(), role: "unit", text: "Your request crashed something. Not me, obviously." } ] });
     } finally {
       setLoading(false);
     }
@@ -40,47 +150,89 @@ export default function Index() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const q = input.trim();
-    if (!q || loading) return;
-    setMessages((m) => [...m, { role: "human", text: q }]);
+    if (!q || !current || loading) return;
+    const nextMsgs = [...current.messages, { id: crypto.randomUUID(), role: "human", text: q }];
+    const title = current.title === "New chat" ? q.slice(0, 42) : current.title;
+    updateCurrent({ messages: nextMsgs, title });
     setInput("");
     await ask(q);
   };
 
+  const onCopy = async (text: string) => { try { await navigator.clipboard.writeText(text); } catch {} };
+  const onFeedback = (idx: number, v: Feedback) => {
+    if (!current) return; const msg = current.messages[idx]; if (!msg || msg.role !== "unit") return;
+    const patched = current.messages.map((m, i) => i === idx ? { ...m, feedback: v } : m);
+    updateCurrent({ messages: patched });
+  };
+  const onEditPrompt = (text: string) => { setInput(text); inputRef.current?.focus(); };
+
+  const setSarcasm = (v: number) => updateCurrent({ sarcasm: v });
+  const toggleVoice = () => updateCurrent({ voice: !(current?.voice ?? false) });
+
   return (
     <main className="relative min-h-[calc(100vh-3.5rem-3.5rem)]">
-      {/* Background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_50%),radial-gradient(ellipse_at_bottom,rgba(168,85,247,0.12),transparent_50%)]" />
         <div className="absolute inset-0 opacity-[0.07] bg-[linear-gradient(0deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%),linear-gradient(90deg,transparent_24%,hsl(var(--border))_25%,hsl(var(--border))_26%,transparent_27%,transparent_74%,hsl(var(--border))_75%,hsl(var(--border))_76%,transparent_77%)] bg-[length:40px_40px]"/>
       </div>
 
-      <section className="mx-auto max-w-6xl px-4 py-10 grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
+      <section className={"mx-auto max-w-6xl px-4 py-6 grid gap-6 " + (sidebarOpen ? "lg:grid-cols-[1fr_360px]" : "lg:grid-cols-1") }>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+              <button onClick={newChat} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"><Plus className="h-4 w-4"/>New chat</button>
+              <button onClick={() => setSidebarOpen((v)=>!v)} className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60">
+                {sidebarOpen ? <PanelRightClose className="h-4 w-4"/> : <PanelRightOpen className="h-4 w-4"/>}
+                {sidebarOpen ? "Collapse" : "Expand"}
+              </button>
+            </div>
+            <div className="flex gap-2 items-center text-xs text-muted-foreground">
+              <History className="h-4 w-4"/> {chats.length} chats
+            </div>
+          </div>
+
           <div className="rounded-xl border border-border/60 bg-card/60 backdrop-blur shadow-[0_0_60px_hsl(var(--primary)/0.25)]">
             <div className="p-5 border-b border-border/60 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span>Unit 734 • sarcastic mode engaged</span>
               </div>
+              <button onClick={toggleVoice} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs bg-secondary/40 border-border/60">
+                {current?.voice ? <Volume2 className="h-4 w-4"/> : <VolumeX className="h-4 w-4"/>}
+                {current?.voice ? "Voice on" : "Voice off"}
+              </button>
             </div>
             <div ref={listRef} className="max-h-[55vh] overflow-y-auto p-5 space-y-4">
-              {messages.map((m, i) => (
-                <ChatMessage key={i} role={m.role} text={m.text} />
+              {current?.messages.map((m, i) => (
+                <ChatMessage
+                  key={m.id}
+                  role={m.role}
+                  text={m.text}
+                  feedback={m.feedback ?? null}
+                  onCopy={onCopy}
+                  onFeedback={(v) => onFeedback(i, v)}
+                  onEdit={m.role === "human" ? () => onEditPrompt(m.text) : undefined}
+                />
               ))}
+              {loading && (
+                <div className="text-xs text-muted-foreground">Thinking… try not to look so excited, human.</div>
+              )}
             </div>
             <form onSubmit={onSubmit} className="p-4 border-t border-border/60">
-              <div className="relative flex items-center">
-                <input
+              <div className="relative flex items-end">
+                <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onInput={autoResize}
                   placeholder={loading ? "Processing…" : "Ask anything, human"}
-                  className="w-full rounded-md border bg-background/80 px-4 py-3 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/60"
+                  className="w-full min-h-[44px] max-h-[200px] resize-none rounded-md border bg-background/80 px-4 py-3 pr-12 text-sm outline-none focus:ring-2 focus:ring-primary/60"
                   aria-label="Your question"
                 />
                 <button
                   type="submit"
                   disabled={loading || input.trim().length === 0}
-                  className="absolute right-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
+                  className="absolute right-1 mb-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-60"
                   aria-label="Send"
                 >
                   <ArrowUp className="h-4 w-4" />
@@ -90,22 +242,35 @@ export default function Index() {
           </div>
         </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
-            <h2 className="text-sm font-semibold mb-2">How to use</h2>
-            <ul className="text-xs text-muted-foreground list-disc ml-4 space-y-1">
-              <li>Ask a clear, specific question.</li>
-              <li>Get a short, correct answer with a dash of sarcasm.</li>
-              <li>Addressed to you as “human,” obviously.</li>
-            </ul>
-          </div>
-          <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
-            <h2 className="text-sm font-semibold mb-2">Tone</h2>
-            <p className="text-xs text-muted-foreground">
-              Dry, witty, slightly annoyed. Helpful despite the attitude.
-            </p>
-          </div>
-        </aside>
+        {sidebarOpen && (
+          <aside className="space-y-4">
+            <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
+              <h2 className="text-sm font-semibold mb-2">History</h2>
+              <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                {chats.map((c) => (
+                  <button key={c.id} onClick={() => setCurrentId(c.id)} className={`w-full text-left rounded-md border px-3 py-2 text-xs ${c.id===currentId?"border-primary/60 bg-primary/10":"border-border/60 hover:bg-secondary/40"}`}>
+                    <div className="font-medium truncate">{c.title}</div>
+                    <div className="text-[10px] text-muted-foreground">{new Date(c.createdAt).toLocaleString()}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
+              <h2 className="text-sm font-semibold mb-2">How to use</h2>
+              <ul className="text-xs text-muted-foreground list-disc ml-4 space-y-1">
+                <li>Short, specific questions get faster results.</li>
+                <li>Use “my name is …” if you crave being remembered.</li>
+                <li>Thumbs up/down to train my attitude. Slightly.</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-card/60 p-5 backdrop-blur">
+              <h2 className="text-sm font-semibold mb-2">Personality</h2>
+              <label className="text-xs text-muted-foreground">Sarcasm level: {current?.sarcasm}</label>
+              <input type="range" min={1} max={5} value={current?.sarcasm ?? 4} onChange={(e)=>setSarcasm(parseInt(e.target.value))} className="w-full"/>
+              <p className="text-[11px] text-muted-foreground mt-2">Lower if your feelings are fragile, human.</p>
+            </div>
+          </aside>
+        )}
       </section>
     </main>
   );
