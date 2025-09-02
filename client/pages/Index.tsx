@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AskResponse } from "@shared/api";
 import ChatMessage, { ChatRole } from "@/components/chat/ChatMessage";
-import { ArrowUp, History, Plus, Sparkles, Volume2, VolumeX, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ArrowUp, History, Plus, Sparkles, Volume2, VolumeX, PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
 
 type Feedback = "up" | "down" | null;
 
