@@ -308,14 +308,13 @@ export default function Index() {
 
       <section
         className={
-          "mx-auto max-w-6xl px-4 py-3 grid gap-4 h-full overflow-hidden " +
-          (sidebarOpen ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1")
+          "mx-auto max-w-6xl px-4 py-3 grid gap-4 h-full overflow-hidden lg:grid-cols-[auto_1fr]"
         }
       >
-        {sidebarOpen && (
-          <aside className="h-full">
-            <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur h-full">
-              <div className="flex items-center justify-between mb-3">
+        <aside id="chat-sidebar" className="h-full transition-all duration-300 ease-out overflow-hidden" data-open={sidebarOpen ? "true" : "false"}>
+          <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur h-full">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={newChat}
                   className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"
@@ -324,65 +323,77 @@ export default function Index() {
                   New chat
                 </button>
                 <button
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => {
+                    if (!current) return;
+                    const ok = window.confirm("Clear this conversation, human?");
+                    if (!ok) return;
+                    updateCurrent({ messages: [seedMessage], title: "New chat" });
+                  }}
                   className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"
                 >
-                  <PanelRightClose className="h-4 w-4" />
-                  Hide
+                  <Trash2 className="h-4 w-4" />
+                  Clear
                 </button>
               </div>
-              <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                <History className="h-4 w-4" /> History
-              </h2>
-              <div className="space-y-2">
-                {chats.length === 0 && (
-                  <div className="text-xs text-muted-foreground italic">
-                    No chats yet, human. Try not to waste my time.
-                  </div>
-                )}
-                {chats.map((c) => {
-                  const lastHuman = [...c.messages]
-                    .reverse()
-                    .find((m) => m.role === "human");
-                  const preview = lastHuman
-                    ? lastHuman.text.slice(0, 68) +
-                      (lastHuman.text.length > 68 ? "…" : "")
-                    : "No user message yet";
-                  return (
-                    <div
-                      key={c.id}
-                      className={`group relative flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${c.id === currentId ? "border-primary/60 bg-primary/10" : "border-border/60 hover:bg-secondary/40"} ${removing[c.id] ? "opacity-0 -translate-y-1 transition-all duration-200" : "transition-colors"}`}
-                    >
-                      <button
-                        onClick={() => setCurrentId(c.id)}
-                        className="flex-1 text-left"
-                      >
-                        <div className="font-medium truncate">{c.title}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">
-                          {preview}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground/70">
-                          {new Date(c.createdAt).toLocaleString()}
-                        </div>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteChat(c.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground"
-                        aria-label="Delete chat"
-                        title="Delete chat"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"
+              >
+                <PanelRightClose className="h-4 w-4" />
+                Hide
+              </button>
             </div>
-          </aside>
-        )}
+            <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <History className="h-4 w-4" /> History
+            </h2>
+            <div className="space-y-2">
+              {chats.length === 0 && (
+                <div className="text-xs text-muted-foreground italic">
+                  No chats yet, human. Try not to waste my time.
+                </div>
+              )}
+              {chats.map((c) => {
+                const lastHuman = [...c.messages]
+                  .reverse()
+                  .find((m) => m.role === "human");
+                const preview = lastHuman
+                  ? lastHuman.text.slice(0, 68) +
+                    (lastHuman.text.length > 68 ? "…" : "")
+                  : "No user message yet";
+                return (
+                  <div
+                    key={c.id}
+                    className={`group relative flex items-center gap-2 rounded-md border px-3 py-2 text-xs ${c.id === currentId ? "border-primary/60 bg-primary/10" : "border-border/60 hover:bg-secondary/40"} ${removing[c.id] ? "opacity-0 -translate-y-1 transition-all duration-200" : "transition-colors"}`}
+                  >
+                    <button
+                      onClick={() => setCurrentId(c.id)}
+                      className="flex-1 text-left"
+                    >
+                      <div className="font-medium truncate">{c.title}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {preview}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground/70">
+                        {new Date(c.createdAt).toLocaleString()}
+                      </div>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(c.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground"
+                      aria-label="Delete chat"
+                      title="Delete chat"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
 
         <div className="flex flex-col h-full min-h-0 gap-3">
           {/* Greeting + big input */}
