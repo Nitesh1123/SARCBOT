@@ -1,4 +1,11 @@
-import { Cpu, User, Copy as CopyIcon, Pencil, ThumbsUp, ThumbsDown } from "lucide-react";
+import {
+  Cpu,
+  User,
+  Copy as CopyIcon,
+  Pencil,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ChatRole = "human" | "unit";
@@ -12,10 +19,22 @@ interface Props {
   onEdit?: () => void;
 }
 
-export default function ChatMessage({ role, text, feedback = null, onCopy, onFeedback, onEdit }: Props) {
+export default function ChatMessage({
+  role,
+  text,
+  feedback = null,
+  onCopy,
+  onFeedback,
+  onEdit,
+}: Props) {
   const isHuman = role === "human";
   return (
-    <div className={cn("group relative flex w-full items-start gap-3 py-0.5 msg-enter", isHuman ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "group relative flex w-full items-start gap-3 py-0.5 msg-enter",
+        isHuman ? "justify-end" : "justify-start",
+      )}
+    >
       {!isHuman && (
         <div className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary/20 text-primary shadow-[0_0_16px_hsl(var(--primary)/0.35)]">
           <Cpu className="h-5 w-5" />
@@ -62,7 +81,9 @@ export default function ChatMessage({ role, text, feedback = null, onCopy, onFee
                 <CopyIcon className="h-3.5 w-3.5" />
               </button>
               {feedback && (
-                <span className="pointer-events-none ml-1 text-[10px] text-muted-foreground">({feedback})</span>
+                <span className="pointer-events-none ml-1 text-[10px] text-muted-foreground">
+                  ({feedback})
+                </span>
               )}
             </>
           ) : (

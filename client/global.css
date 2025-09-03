@@ -104,30 +104,74 @@
 
 @layer utilities {
   @keyframes glitch {
-    0% { transform: translate(0); filter: hue-rotate(0deg); }
-    20% { transform: translate(0.5px,-0.5px); }
-    40% { transform: translate(-0.5px,0.5px); }
-    60% { transform: translate(0.3px,0.2px); }
-    80% { transform: translate(-0.3px,-0.2px); }
-    100% { transform: translate(0); filter: hue-rotate(0deg); }
+    0% {
+      transform: translate(0);
+      filter: hue-rotate(0deg);
+    }
+    20% {
+      transform: translate(0.5px, -0.5px);
+    }
+    40% {
+      transform: translate(-0.5px, 0.5px);
+    }
+    60% {
+      transform: translate(0.3px, 0.2px);
+    }
+    80% {
+      transform: translate(-0.3px, -0.2px);
+    }
+    100% {
+      transform: translate(0);
+      filter: hue-rotate(0deg);
+    }
   }
-  .glitchy { animation: glitch 0.9s steps(2,end) infinite; }
+  .glitchy {
+    animation: glitch 0.9s steps(2, end) infinite;
+  }
 }
 
 @layer components {
   @keyframes msg-enter {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  .msg-enter { animation: msg-enter 180ms ease-out both; }
-  .hover-smooth { transition: all 150ms ease; }
+  .msg-enter {
+    animation: msg-enter 180ms ease-out both;
+  }
+  .hover-smooth {
+    transition: all 150ms ease;
+  }
 
-  .chat-message { line-height: 1.65; letter-spacing: 0; }
-  .message-content { @apply rounded-lg px-4 py-3 text-[0.95rem]; }
-  .message-content-ai { @apply bg-secondary/40 text-foreground border border-border/60 shadow-none; }
-  .message-content-user { @apply bg-primary text-primary-foreground shadow-[0_0_30px_hsl(var(--primary)/0.35)]; }
-  .message-gap { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+  .chat-message {
+    line-height: 1.65;
+    letter-spacing: 0;
+  }
+  .message-content {
+    @apply rounded-lg px-4 py-3 text-[0.95rem];
+  }
+  .message-content-ai {
+    @apply bg-secondary/40 text-foreground border border-border/60 shadow-none;
+  }
+  .message-content-user {
+    @apply bg-primary text-primary-foreground shadow-[0_0_30px_hsl(var(--primary)/0.35)];
+  }
+  .message-gap {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
 
-  #chat-sidebar[data-open="true"] { width: 260px; opacity: 1; }
-  #chat-sidebar[data-open="false"] { width: 0px; opacity: 0; }
+  #chat-sidebar[data-open="true"] {
+    width: 260px;
+    opacity: 1;
+  }
+  #chat-sidebar[data-open="false"] {
+    width: 0px;
+    opacity: 0;
+  }
 }

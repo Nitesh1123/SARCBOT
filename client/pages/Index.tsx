@@ -189,7 +189,9 @@ export default function Index() {
               : {
                   ...c,
                   messages: c.messages.map((m) =>
-                    m.id === id ? { ...m, text: tokens.slice(0, i).join("") } : m,
+                    m.id === id
+                      ? { ...m, text: tokens.slice(0, i).join("") }
+                      : m,
                   ),
                 },
           ),
@@ -311,7 +313,11 @@ export default function Index() {
           "mx-auto max-w-6xl px-4 py-3 grid gap-4 h-full overflow-hidden lg:grid-cols-[auto_1fr]"
         }
       >
-        <aside id="chat-sidebar" className="h-full transition-all duration-300 ease-out overflow-hidden" data-open={sidebarOpen ? "true" : "false"}>
+        <aside
+          id="chat-sidebar"
+          className="h-full transition-all duration-300 ease-out overflow-hidden"
+          data-open={sidebarOpen ? "true" : "false"}
+        >
           <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur h-full -mr-[5px]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
