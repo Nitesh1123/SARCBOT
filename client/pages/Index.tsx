@@ -90,10 +90,12 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    listRef.current?.scrollTo({
-      top: listRef.current.scrollHeight,
-      behavior: "smooth",
-    });
+    const el = listRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.clientHeight - el.scrollTop < 80;
+    if (nearBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+    }
   }, [current?.messages]);
 
   useEffect(() => {
@@ -172,26 +174,35 @@ export default function Index() {
   useEffect(autoResize, [input]);
 
   const streamAppend = (id: string, full: string) => {
-    const words = full.split(/(\s+)/); // keep spaces
+    const tokens = full.split(/(\s+)/); // keep spaces
     let i = 0;
-    const tick = () => {
-      setChats((all) =>
-        all.map((c) =>
-          c.id !== currentId
-            ? c
-            : {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === id ? { ...m, text: words.slice(0, i).join("") } : m,
-                ),
-              },
-        ),
-      );
-      i += 2; // word + space
-      if (i <= words.length) setTimeout(tick, 22 + Math.random() * 38);
-      else speak(full);
+    let raf = 0;
+    let last = 0;
+    const step = (ts: number) => {
+      if (!last) last = ts;
+      if (ts - last >= 40) {
+        i = Math.min(i + 4, tokens.length); // chunk updates
+        setChats((all) =>
+          all.map((c) =>
+            c.id !== currentId
+              ? c
+              : {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === id ? { ...m, text: tokens.slice(0, i).join("") } : m,
+                  ),
+                },
+          ),
+        );
+        last = ts;
+      }
+      if (i < tokens.length) raf = requestAnimationFrame(step);
+      else {
+        cancelAnimationFrame(raf);
+        speak(full);
+      }
     };
-    setTimeout(tick, 60);
+    raf = requestAnimationFrame(step);
   };
 
   const remember = (q: string) => {
