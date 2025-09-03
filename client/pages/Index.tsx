@@ -312,7 +312,7 @@ export default function Index() {
         }
       >
         <aside id="chat-sidebar" className="h-full transition-all duration-300 ease-out overflow-hidden" data-open={sidebarOpen ? "true" : "false"}>
-          <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur h-full">
+          <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur h-full -mr-[5px]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <button
@@ -322,25 +322,13 @@ export default function Index() {
                   <Plus className="h-4 w-4" />
                   New chat
                 </button>
-                <button
-                  onClick={() => {
-                    if (!current) return;
-                    const ok = window.confirm("Clear this conversation, human?");
-                    if (!ok) return;
-                    updateCurrent({ messages: [seedMessage], title: "New chat" });
-                  }}
-                  className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Clear
-                </button>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60"
+                className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm bg-secondary/40 border-border/60 -mr-[4px]"
+                aria-label="Hide sidebar"
               >
                 <PanelRightClose className="h-4 w-4" />
-                Hide
               </button>
             </div>
             <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
