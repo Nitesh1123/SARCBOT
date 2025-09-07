@@ -25,8 +25,11 @@ export function createServer() {
 }
 
 // 🚀 Start server directly if this file is run with `pnpm tsx server/index.ts`
-const app = createServer();
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+// Only start if this module is the entry point (avoid auto-start when imported by Vite plugin)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const app = createServer();
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+  });
+}
